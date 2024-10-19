@@ -2,7 +2,6 @@ package main
 
 import (
 	"DiscordCommander/requests"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -24,28 +23,28 @@ func authVerify() bool {
 	return true
 }
 
-func AuthenticationInit(cmdArgs []string) {
+func (c CLICommands) AuthenticationInit() {
 	_, valid := os.Stat("tokens.env")
 	if valid != nil {
 		passedAuthentication := false
 
 		// Check that the cli options don't contain it
-		for i := 0; i < len(cmdArgs); i++ {
-			if cmdArgs[i] == "-at" {
-				if len(cmdArgs) < i+3 {
+		for i := 0; i < len(c.args); i++ {
+			if c.args[i] == "-at" {
+				if len(c.args) < i+3 {
 					log.Fatalln("Insufficient input for \"-at\" command!")
 				}
 
-				requests.InitVars(cmdArgs[i+1], cmdArgs[i+2])
+				requests.InitVars(c.args[i+1], c.args[i+2])
 				if !authVerify() {
 					log.Fatalln("Malformed \"-at\" command!")
 				} else {
 					passedAuthentication = true
-					fmt.Println("Successfuly checked authentication")
+					log.Println("Successfuly checked authentication")
 				}
 
 				// Spit out the new tokens.env file
-				data := []byte("APPLICATION_ID=\"" + cmdArgs[i+1] + "\"\n" + "AUTHENTICATION_TOKEN=\"" + cmdArgs[i+2] + "\"")
+				data := []byte("APPLICATION_ID=\"" + c.args[i+1] + "\"\n" + "AUTHENTICATION_TOKEN=\"" + c.args[i+2] + "\"")
 				err := os.WriteFile("tokens.env", data, 0777)
 				if err != nil {
 					log.Fatalln("Failed to write authentication info to token file!")
@@ -70,6 +69,6 @@ func AuthenticationInit(cmdArgs []string) {
 	}
 
 	if authVerify() {
-		fmt.Println("Successfuly checked authentication")
+		log.Println("Successfuly checked authentication")
 	}
 }

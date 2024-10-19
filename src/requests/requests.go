@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -17,8 +16,8 @@ func InitVars(appID string, authToken string) {
 	ApplicationID = appID
 	AuthenticationToken = strings.Join([]string{"Bot", authToken}, " ")
 
-	fmt.Println(ApplicationID)
-	fmt.Println(AuthenticationToken)
+	//fmt.Println(ApplicationID)
+	//fmt.Println(AuthenticationToken)
 }
 
 func GenericRequest(method string, url string, payload io.Reader) *http.Response {
