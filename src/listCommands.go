@@ -129,6 +129,10 @@ func (c CLICommands) ListCommandsHandler() {
 	writeGlobals := func(extendedTab string) {
 		commands := getGlobalCommands()
 
+		if len(commands) == 0 {
+			fmt.Println("No global commands")
+		}
+
 		for i := 0; i < len(commands); i++ {
 			fmt.Println(extendedTab + "Command " + strconv.Itoa(i+1) + ": \n" +
 				extendedTab + "	-Name: \"" + commands[i].Name + "\"\n" +
@@ -139,6 +143,10 @@ func (c CLICommands) ListCommandsHandler() {
 
 	writeClanCmds := func(guildID string, extendedTab string) {
 		commands := getServerCommands(guildID)
+
+		if len(commands) == 0 {
+			fmt.Println("No commands in the guild")
+		}
 
 		for i := 0; i < len(commands); i++ {
 			fmt.Println(extendedTab + "Command " + strconv.Itoa(i+1) + ": \n" +
@@ -181,11 +189,10 @@ func (c CLICommands) ListCommandsHandler() {
 
 		if !serverPresent {
 			log.Fatalln("Server not found!")
-		} else {
-			fmt.Println("Found server, id:", serverID)
 		}
 
 		writeClanCmds(serverID, "")
+
 	default:
 		log.Fatalln("Invalid organization tag")
 	}
