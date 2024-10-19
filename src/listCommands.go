@@ -186,5 +186,7 @@ func (c CLICommands) ListCommandsHandler() {
 		}
 
 		writeClanCmds(serverID, "")
+	default:
+		log.Fatalln("Invalid organization tag")
 	}
 }
