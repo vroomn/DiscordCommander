@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 )
 
@@ -11,7 +11,40 @@ type CLICommands struct {
 	iterationIdx int
 }
 
+type ArguementTask struct {
+	taskID  int
+	options []string
+}
+
 func main() {
+	arguments := os.Args[1:] // Program call arguements, ignoring directory first entry
+
+	taskMaps := map[string]int{
+		"-at":   1,
+		"-list": 2,
+	}
+
+	tasks := []ArguementTask{}
+	for _, argument := range arguments {
+		taskID, exists := taskMaps[argument]
+		if exists {
+			tasks = append(tasks, ArguementTask{taskID: taskID})
+		} else {
+			if len(tasks) == 0 {
+				fmt.Println("Must have a command present first!")
+				os.Exit(1)
+			}
+			tasks[len(tasks)-1].options = append(tasks[len(tasks)-1].options, argument)
+		}
+	}
+
+	for _, task := range tasks {
+		fmt.Println(task)
+	}
+
+}
+
+/*func main() {
 	cmdArgs := CLICommands{os.Args[1:], len(os.Args[1:]), 0}
 
 	//cmdArgs := os.Args[1:]
@@ -31,4 +64,4 @@ func main() {
 			cmdArgs.DeleteHandler()
 		}
 	}
-}
+}*/
