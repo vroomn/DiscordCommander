@@ -2,73 +2,64 @@ package main
 
 import (
 	"DiscordCommander/requests"
-	"log"
 	"net/http"
 	"os"
 	"strings"
 )
 
-func authVerify() bool {
-	response := requests.GenericRequest(
-		http.MethodGet,
-		strings.Join([]string{requests.APPLICATION_ENDPOINT, requests.ApplicationID}, ""),
-		nil,
-	)
+func Authenticate(tasks []ArguementTask, errMsg chan string) {
 
-	if response.StatusCode != 200 {
-		return false
-	}
-	defer response.Body.Close()
+	// Check the task list for auth info
+	taskPresence := false
+	for _, task := range tasks {
+		if task.taskID != AUTHENTICATE {
+			continue // Pass over the value
+		}
 
-	return true
-}
+		// The command is of-interest
+		if len(task.options) == 2 {
+			requests.InitVars(task.options[0], task.options[1])
 
-func (c CLICommands) AuthenticationInit() {
-	_, valid := os.Stat("tokens.env")
-	if valid != nil {
-		passedAuthentication := false
-
-		// Check that the cli options don't contain it
-		for i := 0; i < len(c.args); i++ {
-			if c.args[i] == "-at" {
-				if len(c.args) < i+3 {
-					log.Fatalln("Insufficient input for \"-at\" command!")
-				}
-
-				requests.InitVars(c.args[i+1], c.args[i+2])
-				if !authVerify() {
-					log.Fatalln("Malformed \"-at\" command!")
-				} else {
-					passedAuthentication = true
-					log.Println("Successfuly checked authentication")
-				}
-
-				// Spit out the new tokens.env file
-				data := []byte("APPLICATION_ID=\"" + c.args[i+1] + "\"\n" + "AUTHENTICATION_TOKEN=\"" + c.args[i+2] + "\"")
-				err := os.WriteFile("tokens.env", data, 0777)
-				if err != nil {
-					log.Fatalln("Failed to write authentication info to token file!")
-				}
+			data := []byte("APPLICATION_ID=\"" + requests.ApplicationID + "\"\n" + "AUTHENTICATION_TOKEN=\"" + requests.AuthenticationToken + "\"")
+			err := os.WriteFile("tokens.env", data, 0777)
+			if err != nil {
+				errMsg <- "Writing cached token info failed"
 			}
+		} else {
+			errMsg <- "Invalid number of related args"
 		}
 
-		if !passedAuthentication {
-			log.Fatalln("You haven't added your authentication information (Application ID & Authentication token), use \"-at {appID} {authToken}\"")
-		}
-	} else {
-		tokenData, err := os.ReadFile("tokens.env")
+		taskPresence = true
+	}
+
+	// Check the filesystem only if not in tasks
+	_, filePresent := os.Stat("tokens.env")
+	if !taskPresence && filePresent == nil {
+		fileData, err := os.ReadFile("tokens.env")
 		if err != nil {
-			log.Fatalln("Failed to open token file!")
+			errMsg <- "Error when attempting to read cached tokens"
 		}
 
-		appIDString, authTokenString, _ := strings.Cut(string(tokenData), "\n")
+		appIDString, authTokenString, _ := strings.Cut(string(fileData), "\n")
 		_, appID, _ := strings.Cut(appIDString, "=\"")
 		_, authToken, _ := strings.Cut(authTokenString, "=\"")
 
 		requests.InitVars(strings.Replace(appID, "\"", "", -1), strings.Replace(authToken, "\"", "", -1))
+	} else if filePresent != nil {
+		errMsg <- "Token cache not found, did you \"-at'\"?"
 	}
 
-	if authVerify() {
-		log.Println("Successfuly checked authentication")
+	// Do the final API check if there are tokens
+	response := requests.GenericRequest(
+		http.MethodGet,
+		requests.APPLICATION_ENDPOINT+requests.ApplicationID,
+		nil,
+	)
+
+	if response.StatusCode != 200 {
+		errMsg <- "Invalid response code when authenticating"
 	}
+	defer response.Body.Close()
+
+	errMsg <- ""
 }

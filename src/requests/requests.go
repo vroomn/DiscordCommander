@@ -4,7 +4,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 )
 
 var ApplicationID string
@@ -14,7 +13,7 @@ const APPLICATION_ENDPOINT string = "https://discord.com/api/v10/applications/"
 
 func InitVars(appID string, authToken string) {
 	ApplicationID = appID
-	AuthenticationToken = strings.Join([]string{"Bot", authToken}, " ")
+	AuthenticationToken = authToken
 
 	//fmt.Println(ApplicationID)
 	//fmt.Println(AuthenticationToken)

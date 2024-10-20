@@ -16,14 +16,20 @@ type ArguementTask struct {
 	options []string
 }
 
+const (
+	AUTHENTICATE = iota
+	LIST         = iota
+)
+
+var taskMaps = map[string]int{
+	"-at":   AUTHENTICATE,
+	"-list": LIST,
+}
+
 func main() {
 	arguments := os.Args[1:] // Program call arguements, ignoring directory first entry
 
-	taskMaps := map[string]int{
-		"-at":   1,
-		"-list": 2,
-	}
-
+	// Break given arguements into organizable commands
 	tasks := []ArguementTask{}
 	for _, argument := range arguments {
 		taskID, exists := taskMaps[argument]
@@ -38,30 +44,21 @@ func main() {
 		}
 	}
 
-	for _, task := range tasks {
-		fmt.Println(task)
-	}
+	// Perform async authentication check
+	authErrChan := make(chan string)
+	go Authenticate(tasks, authErrChan)
 
+	//for _, task := range tasks {
+	//	fmt.Println(task)
+	//}
+
+	// Assume the authentication is going to take the least time
+
+	fmt.Print("\033[1mAuthentication status ... ")
+	authErr := <-authErrChan
+	if authErr == "" {
+		fmt.Println("\033[38;5;34mSuccess\033[0m")
+	} else {
+		fmt.Println("\033[38;5;196mFailure\033[38;5;m\n  ↳ " + authErr + "\033[0m")
+	}
 }
-
-/*func main() {
-	cmdArgs := CLICommands{os.Args[1:], len(os.Args[1:]), 0}
-
-	//cmdArgs := os.Args[1:]
-	if len(cmdArgs.args) <= 0 {
-		log.Fatal("Expected input!")
-	}
-
-	// Check if the program has access to the keys
-	cmdArgs.AuthenticationInit()
-
-	for cmdArgs.iterationIdx = 0; cmdArgs.iterationIdx < cmdArgs.len; cmdArgs.iterationIdx++ {
-		switch cmdArgs.args[cmdArgs.iterationIdx] {
-		case "-list":
-			cmdArgs.ListCommandsHandler()
-
-		case "-del":
-			cmdArgs.DeleteHandler()
-		}
-	}
-}*/

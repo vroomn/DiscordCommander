@@ -5,6 +5,9 @@ A "()" indicates conditional need to have
 
 ### Authorization
 Attach proper authorization information: "-at {appID} {authToken}"
+Notes:
+    This command will overwrite a preexisting cache
+    {authToken} requires the "Bot" or "Bearer" pre-tag (https://discord.com/developers/docs/interactions/application-commands#registering-a-command)
 
 ### List
 List out commands: "-list [all | global | clan {Clan Name}]"
