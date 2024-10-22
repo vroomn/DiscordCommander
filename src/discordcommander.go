@@ -54,10 +54,10 @@ func main() {
 	authErrChan := make(chan string)
 	go Authenticate(argtasks, authErrChan)
 
-	// Sorting and ordering engine
+	// Sorting and ordering engine (SYNCHRONOUS)
 	tasks := []task{}
 	subtasks := []int{}
-	listIdx := -1 // For if list command is present, makes sending to back easier
+	listIdx := -1 // For if list command is present, makes sending to end of slice easier
 	for _, argtask := range argtasks {
 		switch argtask.taskID {
 		case LIST:
@@ -72,13 +72,8 @@ func main() {
 			fmt.Println(argtask)
 
 		case DELETE:
-			/* Possible Subtasks
-			- Get global commands
-			- Get servers present in
-			- Get specific server commands
-			*/
-
-			tasks = append(tasks, task{DELETE, []string{}, ""}) // Testing hack
+			tasks = slices.Insert(tasks, 0, DeleteValidation(argtask, &subtasks))
+			listIdx++ // To make sure listIdx is still accurate
 		}
 	}
 
@@ -96,13 +91,17 @@ func main() {
 
 		switch t.taskType {
 		case AUTHENTICATE:
-			fmt.Print("Authentication status...	")
+			fmt.Print("Authentication status...		")
 
 		case LIST:
-			fmt.Print("List grab status...		")
+			fmt.Print("List grab status...			")
 
 		case DELETE:
-			fmt.Print("Command deletion status...	")
+			if len(t.args) > 0 {
+				fmt.Print("Command \"" + string(t.args[len(t.args)-1]) + "\" deletion status...	")
+			} else {
+				fmt.Print("Command \"" + "\" deletion status...	")
+			}
 
 		default: // Only for development, to delete later
 			fmt.Println("Unknown command, skipping")

@@ -22,4 +22,4 @@ Add a subcommand to a command "-add-subcommand [global | clan {Clan Name} | glob
                                 (global-subgroup & clan-subgroup){Subcommand Group} {Name} {Description}
 
 ### Delete
-Delete a command: "-del [global | clan {Clan Name}] {Command Name}"
+Delete a command: "-del [global | server {Server Name}] {Command Name}"
