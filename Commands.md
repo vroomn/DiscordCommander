@@ -13,13 +13,14 @@ Notes:
 List out commands: "-list [all | global | server {Server Name}]"
 
 ### Add
-Add a command to the bot: "-add [global | clan {Clan Name}] [slash | user | message] {description}
+Add a command to the bot: "-add [global | server {Server Name}] [slash | user | message] {Command Name} {description}"
 
-Add subcommand group to a command "-add-subcommand-group [global | clan {Clan Name}] {Command Name} {Group Name} {Description}
+Add subcommand group to a command "-add-scg [global | server {Server Name}] {Command Name} {Group Name} {Description}"
     ↳ The location of the target command comes first to reduce calls to API
 
-Add a subcommand to a command "-add-subcommand [global | clan {Clan Name} | global-subgroup | clan-subgroup {Clan Name}] {Command Name} 
-                                (global-subgroup & clan-subgroup){Subcommand Group} {Name} {Description}
+Add a subcommand to a command "-add-sc [global | server {Server Name} | global-subgroup | server-subgroup {Server Name}] {Command Name} (global-subgroup & server-subgroup){Subcommand Group} {Name} {Description}"
+
+Name associated subcommand groups and subcommands will be combined with the primary add command programatically under one API call
 
 ### Delete
 Delete a command: "-del [global | server {Server Name}] {Command Name}"

@@ -12,17 +12,21 @@ type ArgumentTask struct {
 }
 
 const (
-	AUTHENTICATE = iota
-	LIST         = iota
-	ADD          = iota
-	DELETE       = iota
+	AUTHENTICATE         = iota
+	LIST                 = iota
+	ADD                  = iota
+	ADD_SUBCOMMAND_GROUP = iota
+	ADD_SUBCOMMAND       = iota
+	DELETE               = iota
 )
 
 var taskMaps = map[string]int{
-	"-at":   AUTHENTICATE,
-	"-list": LIST,
-	"-add":  ADD,
-	"-del":  DELETE,
+	"-at":      AUTHENTICATE,
+	"-list":    LIST,
+	"-add":     ADD,
+	"-add-scg": ADD_SUBCOMMAND_GROUP,
+	"-add-sc":  ADD_SUBCOMMAND,
+	"-del":     DELETE,
 }
 
 type task struct {
@@ -64,12 +68,15 @@ func main() {
 			listIdx = len(tasks)
 			tasks = append(tasks, ListValidation(argtask, &subtasks))
 
+		//TODO: Bundle together addition operations on the same task
 		case ADD:
-			/* Possible Subtasks
-			- Get servers present in
-			*/
+			tasks = append(tasks, ComboAddSCGVerification(argtask, &subtasks, ADD))
 
-			fmt.Println(argtask)
+		case ADD_SUBCOMMAND_GROUP:
+			tasks = append(tasks, ComboAddSCGVerification(argtask, &subtasks, ADD_SUBCOMMAND_GROUP))
+
+		case ADD_SUBCOMMAND:
+			tasks = append(tasks, AddSubcommandVerification(argtask, &subtasks))
 
 		case DELETE:
 			tasks = slices.Insert(tasks, 0, DeleteValidation(argtask, &subtasks))
@@ -95,6 +102,15 @@ func main() {
 
 		case LIST:
 			fmt.Print("List grab status...			")
+
+		case ADD:
+			fmt.Print("Command addition status...		")
+
+		case ADD_SUBCOMMAND_GROUP:
+			fmt.Print("Command subgroup addition status...	")
+
+		case ADD_SUBCOMMAND:
+			fmt.Print("Subcommand addition status...		")
 
 		case DELETE:
 			if len(t.args) > 0 {
