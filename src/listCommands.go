@@ -2,14 +2,31 @@ package main
 
 import (
 	"DiscordCommander/requests"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
 )
 
+// Validates that command structure is correct and get subtasks
+func ListValidation(argtask ArgumentTask, subtasks *[]int) task {
+	switch argtask.options[0] {
+	case "global":
+		requests.AddSubtasks(subtasks, requests.GET_GLOBAL)
+
+	case "server":
+		if len(argtask.options) < 2 {
+			return task{LIST, []string{}, "Not enough arguments to execute command"}
+		}
+		requests.AddSubtasks(subtasks, requests.GET_SERVER_COMMANDS, requests.GET_SERVER_PRESENCE)
+
+	case "all":
+		requests.AddSubtasks(subtasks, requests.GET_GLOBAL, requests.GET_SERVER_COMMANDS, requests.GET_SERVER_PRESENCE)
+
+	default:
+		return task{LIST, []string{}, "Invalid selection argument"}
+	}
+
+	return task{LIST, argtask.options, ""}
+}
+
+/*
 type GlobalCommands []struct {
 	ID                       string      `json:"id"`
 	ApplicationID            string      `json:"application_id"`
@@ -197,3 +214,4 @@ func (c CLICommands) ListCommandsHandler() {
 		log.Fatalln("Invalid organization tag")
 	}
 }
+*/

@@ -1,11 +1,6 @@
 package main
 
-import (
-	"DiscordCommander/requests"
-	"log"
-	"net/http"
-)
-
+/*
 func (c CLICommands) DeleteHandler() {
 	switch c.args[c.iterationIdx+1] {
 	case "global":
@@ -86,3 +81,4 @@ func (c CLICommands) DeleteHandler() {
 		log.Fatalln("Invalid organization tag")
 	}
 }
+*/

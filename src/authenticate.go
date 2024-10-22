@@ -7,8 +7,7 @@ import (
 	"strings"
 )
 
-func Authenticate(tasks []ArguementTask, errMsg chan string) {
-
+func Authenticate(tasks []ArgumentTask, errMsg chan string) {
 	// Check the task list for auth info
 	taskPresence := false
 	for _, task := range tasks {
@@ -57,7 +56,7 @@ func Authenticate(tasks []ArguementTask, errMsg chan string) {
 	)
 
 	if response.StatusCode != 200 {
-		errMsg <- "Invalid response code when authenticating"
+		errMsg <- "Invalid response code when authenticating, code: " + response.Status
 	}
 	defer response.Body.Close()
 
