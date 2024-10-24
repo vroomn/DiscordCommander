@@ -95,7 +95,7 @@ type JointAdd struct {
 }
 
 // Add to joint tasks
-func (arr *AsyncJointAddArr) TaskAppend(task *Task, asyncTasks *int) {
+func (arr *AsyncJointAddArr) TaskAppend(task *Task, wg *sync.WaitGroup) {
 	// Get the name of the command
 	var name string
 	switch task.taskType {
@@ -150,5 +150,10 @@ func (arr *AsyncJointAddArr) TaskAppend(task *Task, asyncTasks *int) {
 		}
 	}
 
-	(*asyncTasks)--
+	wg.Done()
+}
+
+func (arr *AsyncJointAddArr) cull(wg *sync.WaitGroup) {
+
+	wg.Done()
 }

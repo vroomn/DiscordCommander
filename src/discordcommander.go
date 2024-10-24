@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"sync"
 )
 
 type ArgumentTask struct {
@@ -58,11 +59,10 @@ func main() {
 	authErrChan := make(chan string)
 	go Authenticate(argtasks, authErrChan)
 
-	// Sorting and ordering engine (SYNCHRONOUS)
+	// Sorting and ordering engine (SYNCHRONOUS & ASYNC)
 	tasks := []Task{}
+	var waitgroup sync.WaitGroup
 	jointAddTasks := AsyncJointAddArr{} // Will originally be fill with all add commands then culled
-	asyncTasks := 0
-	//var asyncTasks []chan bool
 	subtasks := []int{}
 	listIdx := -1 // For if list command is present, makes sending to end of slice easier
 
@@ -72,24 +72,23 @@ func main() {
 			listIdx = len(tasks)
 			tasks = append(tasks, ListValidation(argtask, &subtasks))
 
-			//TODO: Bundle together addition operations on the same task
 		case ADD:
 			tasks = append(tasks, ComboAddSCGVerification(argtask, &subtasks, ADD))
 
-			asyncTasks++
-			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &asyncTasks)
+			waitgroup.Add(1)
+			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &waitgroup)
 
 		case ADD_SUBCOMMAND_GROUP:
 			tasks = append(tasks, ComboAddSCGVerification(argtask, &subtasks, ADD_SUBCOMMAND_GROUP))
 
-			asyncTasks++
-			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &asyncTasks)
+			waitgroup.Add(1)
+			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &waitgroup)
 
 		case ADD_SUBCOMMAND:
 			tasks = append(tasks, AddSubcommandVerification(argtask, &subtasks))
 
-			asyncTasks++
-			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &asyncTasks)
+			waitgroup.Add(1)
+			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &waitgroup)
 
 		case DELETE:
 			tasks = slices.Insert(tasks, 0, DeleteValidation(argtask, &subtasks))
@@ -98,33 +97,41 @@ func main() {
 	}
 
 	// Await goroutine returns
-	for asyncTasks > 0 {
-		continue
-	}
+	waitgroup.Done()
 
-	// Cull single item commands
-	iter := 0 // Hack to get around range issues
-	for _, jointAdd := range jointAddTasks.jointAdds {
-		itemsPresent := 0
-		if jointAdd.primaryAdd != nil {
-			itemsPresent++
+	/*go func() {
+		iter := 0 // Hack to get around range issues
+		for _, jointAdd := range jointAddTasks.jointAdds {
+			itemsPresent := 0
+			if jointAdd.primaryAdd != nil {
+				itemsPresent++
+			}
+
+			if len(jointAdd.subcommandGroups) > 0 {
+				itemsPresent++
+			}
+
+			if len(jointAdd.subcommands) > 0 {
+				itemsPresent++
+			}
+
+			if itemsPresent < 2 {
+				jointAddTasks.jointAdds = append(jointAddTasks.jointAdds[:iter], jointAddTasks.jointAdds[iter+1:]...)
+				iter--
+			}
+
+			iter++
 		}
+	}()*/
 
-		if len(jointAdd.subcommandGroups) > 0 {
-			itemsPresent++
-		}
+	// Cull single item commands (Async)
+	waitgroup.Add(1)
+	jointAddTasks.cull(&waitgroup)
 
-		if len(jointAdd.subcommands) > 0 {
-			itemsPresent++
-		}
+	// Run subtasks
 
-		if itemsPresent < 2 {
-			jointAddTasks.jointAdds = append(jointAddTasks.jointAdds[:iter], jointAddTasks.jointAdds[iter+1:]...)
-			iter--
-		}
-
-		iter++
-	}
+	// Wait for completion
+	waitgroup.Wait()
 
 	// Sort tasks into appropriate order
 	// Place list command last
@@ -132,6 +139,14 @@ func main() {
 		tasks = append(tasks, tasks[listIdx])
 		tasks = append(tasks[:listIdx], tasks[listIdx+1:]...) // Remove old entry
 	}
+
+	// Actually go through the array of commands and run gofuncs
+	/*for _, task := range tasks {
+		switch task.taskType {
+		case LIST:
+
+		}
+	}*/
 
 	// Print out action statuses
 	tasks = slices.Insert(tasks, 0, Task{AUTHENTICATE, []string{}, <-authErrChan}) // Workaround to get auth to show up
@@ -160,10 +175,6 @@ func main() {
 			} else {
 				fmt.Print("Command \"" + "\" deletion status...	")
 			}
-
-		default: // Only for development, to delete later
-			fmt.Println("Unknown command, skipping")
-			continue
 		}
 
 		// Print formatted status
