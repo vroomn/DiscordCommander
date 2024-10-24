@@ -29,7 +29,7 @@ var taskMaps = map[string]int{
 	"-del":     DELETE,
 }
 
-type task struct {
+type Task struct {
 	taskType int
 	args     []string
 	errMsg   string
@@ -59,29 +59,71 @@ func main() {
 	go Authenticate(argtasks, authErrChan)
 
 	// Sorting and ordering engine (SYNCHRONOUS)
-	tasks := []task{}
+	tasks := []Task{}
+	jointAddTasks := AsyncJointAddArr{} // Will originally be fill with all add commands then culled
+	asyncTasks := 0
+	//var asyncTasks []chan bool
 	subtasks := []int{}
 	listIdx := -1 // For if list command is present, makes sending to end of slice easier
+
 	for _, argtask := range argtasks {
 		switch argtask.taskID {
 		case LIST:
 			listIdx = len(tasks)
 			tasks = append(tasks, ListValidation(argtask, &subtasks))
 
-		//TODO: Bundle together addition operations on the same task
+			//TODO: Bundle together addition operations on the same task
 		case ADD:
 			tasks = append(tasks, ComboAddSCGVerification(argtask, &subtasks, ADD))
+
+			asyncTasks++
+			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &asyncTasks)
 
 		case ADD_SUBCOMMAND_GROUP:
 			tasks = append(tasks, ComboAddSCGVerification(argtask, &subtasks, ADD_SUBCOMMAND_GROUP))
 
+			asyncTasks++
+			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &asyncTasks)
+
 		case ADD_SUBCOMMAND:
 			tasks = append(tasks, AddSubcommandVerification(argtask, &subtasks))
+
+			asyncTasks++
+			go jointAddTasks.TaskAppend(&tasks[len(tasks)-1], &asyncTasks)
 
 		case DELETE:
 			tasks = slices.Insert(tasks, 0, DeleteValidation(argtask, &subtasks))
 			listIdx++ // To make sure listIdx is still accurate
 		}
+	}
+
+	// Await goroutine returns
+	for asyncTasks > 0 {
+		continue
+	}
+
+	// Cull single item commands
+	iter := 0 // Hack to get around range issues
+	for _, jointAdd := range jointAddTasks.jointAdds {
+		itemsPresent := 0
+		if jointAdd.primaryAdd != nil {
+			itemsPresent++
+		}
+
+		if len(jointAdd.subcommandGroups) > 0 {
+			itemsPresent++
+		}
+
+		if len(jointAdd.subcommands) > 0 {
+			itemsPresent++
+		}
+
+		if itemsPresent < 2 {
+			jointAddTasks.jointAdds = append(jointAddTasks.jointAdds[:iter], jointAddTasks.jointAdds[iter+1:]...)
+			iter--
+		}
+
+		iter++
 	}
 
 	// Sort tasks into appropriate order
@@ -92,7 +134,7 @@ func main() {
 	}
 
 	// Print out action statuses
-	tasks = slices.Insert(tasks, 0, task{AUTHENTICATE, []string{}, <-authErrChan}) // Workaround to get auth to show up
+	tasks = slices.Insert(tasks, 0, Task{AUTHENTICATE, []string{}, <-authErrChan}) // Workaround to get auth to show up
 	for _, t := range tasks {
 		fmt.Print("\033[1m")
 

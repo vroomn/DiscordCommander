@@ -5,9 +5,9 @@ import (
 )
 
 // Validates that command structure is correct and get subtasks
-func ListValidation(argtask ArgumentTask, subtasks *[]int) task {
+func ListValidation(argtask ArgumentTask, subtasks *[]int) Task {
 	if len(argtask.options) < 1 {
-		return task{DELETE, []string{}, "Must have a command type!"}
+		return Task{LIST, []string{}, "Must have a command type!"}
 	}
 
 	switch argtask.options[0] {
@@ -16,20 +16,20 @@ func ListValidation(argtask ArgumentTask, subtasks *[]int) task {
 
 	case "server":
 		if len(argtask.options) < 2 {
-			return task{LIST, []string{}, "Not enough arguments to execute command"}
+			return Task{LIST, []string{}, "Not enough arguments to execute command"}
 		}
 
 		requests.AddSubtasks(subtasks, requests.GET_SERVER_COMMANDS, requests.GET_SERVER_PRESENCE)
-		return task{LIST, []string{argtask.options[1]}, ""}
+		return Task{LIST, []string{argtask.options[1]}, ""}
 
 	case "all":
 		requests.AddSubtasks(subtasks, requests.GET_GLOBAL, requests.GET_SERVER_COMMANDS, requests.GET_SERVER_PRESENCE)
 
 	default:
-		return task{LIST, []string{}, "Invalid selection argument"}
+		return Task{LIST, []string{}, "Invalid selection argument"}
 	}
 
-	return task{LIST, []string{}, ""}
+	return Task{LIST, []string{}, ""}
 }
 
 /*

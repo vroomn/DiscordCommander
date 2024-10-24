@@ -2,9 +2,9 @@ package main
 
 import "DiscordCommander/requests"
 
-func DeleteValidation(argtask ArgumentTask, subtasks *[]int) task {
+func DeleteValidation(argtask ArgumentTask, subtasks *[]int) Task {
 	if len(argtask.options) < 1 {
-		return task{DELETE, []string{}, "Must have a command type!"}
+		return Task{DELETE, []string{}, "Must have a command type!"}
 	}
 
 	switch argtask.options[0] {
@@ -14,7 +14,7 @@ func DeleteValidation(argtask ArgumentTask, subtasks *[]int) task {
 		}
 
 		requests.AddSubtasks(subtasks, requests.GET_GLOBAL)
-		return task{DELETE, []string{argtask.options[1]}, ""}
+		return Task{DELETE, []string{argtask.options[1]}, ""}
 
 	case "server":
 		if len(argtask.options) < 3 { // Not enough options
@@ -22,13 +22,13 @@ func DeleteValidation(argtask ArgumentTask, subtasks *[]int) task {
 		}
 
 		requests.AddSubtasks(subtasks, requests.GET_SERVER_PRESENCE, requests.GET_SERVER_COMMANDS)
-		return task{DELETE, []string{argtask.options[1], argtask.options[2]}, ""}
+		return Task{DELETE, []string{argtask.options[1], argtask.options[2]}, ""}
 
 	default:
-		return task{DELETE, []string{argtask.options[len(argtask.options)-1]}, "Invalid selection argument"}
+		return Task{DELETE, []string{argtask.options[len(argtask.options)-1]}, "Invalid selection argument"}
 	}
 
-	return task{DELETE, []string{}, "Not enough command arguments"}
+	return Task{DELETE, []string{}, "Not enough command arguments"}
 }
 
 /*
